@@ -56,6 +56,62 @@ class SongController
     }
 
     /**
+     * POST /api/songs/bulk-import -> CALL sp_song_bulk_import
+     * Body: { "rows": [{ "title": "...", "artist": "...", ... }] }
+     */
+    public function bulkImport(): void
+    {
+        $body = Response::getJsonBody();
+        $rows = $body['rows'] ?? null;
+
+        if (!is_array($rows) || $rows === []) {
+            Response::error('El campo rows debe ser un arreglo no vacío.', 422, [
+                ['field' => 'rows', 'message' => 'Debe contener al menos una canción.']
+            ]);
+        }
+
+        if (count($rows) > 2500) {
+            Response::error('El lote no puede superar 2500 canciones.', 422, [
+                ['field' => 'rows', 'message' => 'El máximo permitido es 2500 registros.']
+            ]);
+        }
+
+        foreach ($rows as $index => $row) {
+            if (!is_array($row)) {
+                Response::error('Cada elemento de rows debe ser un objeto de canción.', 422, [
+                    ['field' => "rows[{$index}]", 'message' => 'El registro no tiene un formato válido.']
+                ]);
+            }
+        }
+
+        try {
+            $stmt = $this->db->prepare('CALL sp_song_bulk_import(:rows)');
+            $stmt->bindValue(':rows', json_encode(
+                $rows,
+                JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR
+            ), PDO::PARAM_STR);
+            $stmt->execute();
+
+            $result = $stmt->fetch() ?: [
+                'status' => 'success',
+                'inserted_count' => count($rows)
+            ];
+            $stmt->closeCursor();
+
+            Response::json($result, 201, null, 'Importación masiva completada.');
+        } catch (JsonException $e) {
+            Response::error('El lote contiene datos que no pueden serializarse.', 422);
+        } catch (PDOException $e) {
+            $sqlState = $e->errorInfo[0] ?? $e->getCode();
+            if ($sqlState === '45000') {
+                Response::error($e->getMessage(), 422);
+            }
+
+            Response::error('Error al ejecutar la importación masiva: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * GET /api/songs/{id} -> CALL sp_song_get_by_id
      */
     public function getById(int $id): void

@@ -368,6 +368,7 @@ body {
 .app-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.5rem; border-bottom:1px solid var(--border-color); background:var(--bg-secondary); position:sticky; top:0; z-index:10; }
 .brand { color:var(--text-main); text-decoration:none; font-size:1.35rem; font-weight:700; }
 .brand span { color:var(--primary); }
+.brand small { color:var(--text-muted); font-size:.65em; font-weight:500; margin-left:.25rem; }
 nav { display:flex; gap:.35rem; flex-wrap:wrap; } nav a { color:var(--text-muted); text-decoration:none; padding:.45rem .8rem; border-radius:var(--radius-sm); } nav a.active, nav a:hover { color:var(--text-main); background:var(--primary-light); }
 .page { padding:1rem 0 3rem; } .page-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; margin-bottom:1.5rem; } h1 { font-size:clamp(1.7rem,4vw,2.4rem); } h2 { font-size:1.1rem; } .eyebrow { color:var(--primary); font-size:.72rem; font-weight:700; letter-spacing:.12em; margin-bottom:.3rem; } .toolbar { display:flex; gap:.75rem; margin-bottom:1rem; } .toolbar input { flex:1; }
 .state { color:var(--text-muted); padding:3rem 1rem; text-align:center; } .alert { padding:.8rem 1rem; border-radius:var(--radius-sm); margin-bottom:1rem; } .alert.error { color:#fecaca; background:var(--danger-light); border:1px solid #7f1d1d; } .alert.success { color:#bbf7d0; background:rgba(16,185,129,.15); border:1px solid #047857; } .alert ul { margin:.5rem 0 0 1.25rem; }

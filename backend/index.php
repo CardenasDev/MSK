@@ -68,6 +68,11 @@ if ($method === 'POST' && $path === '/api/songs') {
     $songCtrl->create();
 }
 
+// POST /api/songs/bulk-import -> Importación masiva
+if ($method === 'POST' && $path === '/api/songs/bulk-import') {
+    $songCtrl->bulkImport();
+}
+
 // GET /api/songs -> Listar/Buscar
 if ($method === 'GET' && $path === '/api/songs') {
     $songCtrl->list();

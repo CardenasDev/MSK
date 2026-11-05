@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-shell',
@@ -7,7 +8,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <header class="app-header">
-      <a routerLink="/catalog" class="brand">♫ <span>MSK</span></a>
+      <a routerLink="/catalog" class="brand">♫ <span>MSK</span> <small>v {{ appVersion }}</small></a>
       <nav aria-label="Navegación principal">
         <a routerLink="/catalog" routerLinkActive="active">Catálogo</a>
         <a routerLink="/playlists" routerLinkActive="active">Playlists</a>
@@ -18,4 +19,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AppShellComponent {}
+export class AppShellComponent {
+  readonly appVersion = environment.appVersion;
+}
