@@ -1,0 +1,23 @@
+# Dependencias y salidas generadas del frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Archivos y artefactos de BMAD
+.agents/
+_bmad/
+BmadOut/
+
+# Variables de entorno y configuracion local
+.env
+.env.*
+!.env.example
+
+# Archivos del sistema y registros
+.DS_Store
+Thumbs.db
+*.log
+
+# Cobertura y caches de herramientas
+coverage/
+.cache/

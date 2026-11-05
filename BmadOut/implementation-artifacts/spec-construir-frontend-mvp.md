@@ -68,6 +68,13 @@ context:
 
 ## Implementation Notes
 
+- Se construyó la SPA Angular standalone con rutas lazy, shell responsivo, Signals y `OnPush`.
+- Se añadieron servicios HTTP tipados para canciones, playlists, grupos y relaciones pivote.
+- El catálogo incorpora búsqueda con debounce de 300 ms, paginación y formularios de alta/edición.
+- Playlists y grupos incorporan alta, edición, eliminación y gestión de relaciones.
+- La compilación Angular pasó correctamente con `npm run build`.
+- No se ejecutaron pruebas manuales contra PHP/MySQL ni existe suite automatizada de frontend en el proyecto.
+
 ## Verification
 
 **Commands:**

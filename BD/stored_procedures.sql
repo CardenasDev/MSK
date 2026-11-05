@@ -55,8 +55,8 @@ BEGIN
     SELECT COUNT(*) AS `total_records`
     FROM `songs` s
     WHERE s.`is_active` = 1
-      AND (p_search IS NULL OR p_search = '' OR s.`title` LIKE CONCAT('%', p_search, '%') OR s.`artist` LIKE CONCAT('%', p_search, '%') OR s.`album` LIKE CONCAT('%', p_search, '%'))
-      AND (p_genre IS NULL OR p_genre = '' OR s.`genre` = p_genre);
+      AND (p_search IS NULL OR CONVERT(p_search USING utf8mb4) = _utf8mb4'' OR s.`title` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
+      AND (p_genre IS NULL OR CONVERT(p_genre USING utf8mb4) = _utf8mb4'' OR s.`genre` = CONVERT(p_genre USING utf8mb4) COLLATE utf8mb4_unicode_ci);
 
     SELECT 
         s.`id`,
@@ -68,8 +68,8 @@ BEGIN
         s.`created_at`
     FROM `songs` s
     WHERE s.`is_active` = 1
-      AND (p_search IS NULL OR p_search = '' OR s.`title` LIKE CONCAT('%', p_search, '%') OR s.`artist` LIKE CONCAT('%', p_search, '%') OR s.`album` LIKE CONCAT('%', p_search, '%'))
-      AND (p_genre IS NULL OR p_genre = '' OR s.`genre` = p_genre)
+      AND (p_search IS NULL OR CONVERT(p_search USING utf8mb4) = _utf8mb4'' OR s.`title` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
+      AND (p_genre IS NULL OR CONVERT(p_genre USING utf8mb4) = _utf8mb4'' OR s.`genre` = CONVERT(p_genre USING utf8mb4) COLLATE utf8mb4_unicode_ci)
     ORDER BY s.`id` DESC
     LIMIT p_limit OFFSET p_offset;
 END$$
@@ -184,7 +184,7 @@ BEGIN
     LEFT JOIN `playlist_songs` ps ON p.`id` = ps.`playlist_id` AND ps.`is_active` = 1
     LEFT JOIN `songs` s ON ps.`song_id` = s.`id` AND s.`is_active` = 1
     WHERE p.`is_active` = 1
-      AND (p_search IS NULL OR p_search = '' OR p.`name` LIKE CONCAT('%', p_search, '%'))
+      AND (p_search IS NULL OR CONVERT(p_search USING utf8mb4) = _utf8mb4'' OR p.`name` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
     GROUP BY p.`id`
     ORDER BY p.`updated_at` DESC
     LIMIT p_limit OFFSET p_offset;
@@ -310,7 +310,7 @@ BEGIN
     LEFT JOIN `group_playlists` gp ON g.`id` = gp.`group_id` AND gp.`is_active` = 1
     LEFT JOIN `playlists` p ON gp.`playlist_id` = p.`id` AND p.`is_active` = 1
     WHERE g.`is_active` = 1
-      AND (p_search IS NULL OR p_search = '' OR g.`name` LIKE CONCAT('%', p_search, '%'))
+      AND (p_search IS NULL OR CONVERT(p_search USING utf8mb4) = _utf8mb4'' OR g.`name` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
     GROUP BY g.`id`
     ORDER BY g.`name` ASC
     LIMIT p_limit OFFSET p_offset;
