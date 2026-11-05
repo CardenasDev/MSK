@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, OnInit, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { forkJoin, finalize } from 'rxjs';
 import { Playlist } from '../../../core/models/playlist.model';
 import { Song } from '../../../core/models/song.model';
 import { PlaylistApiService } from '../../../core/services/playlist-api.service';
@@ -46,7 +46,7 @@ import { PlaylistApiService } from '../../../core/services/playlist-api.service'
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AddToPlaylistModalComponent {
+export class AddToPlaylistModalComponent implements OnInit {
   readonly song = input.required<Song>();
   readonly cancel = output<void>();
   readonly saved = output<void>();
@@ -57,13 +57,17 @@ export class AddToPlaylistModalComponent {
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
 
-  constructor() {
-    this.playlistsApi.listAll().pipe(finalize(() => this.loading.set(false))).subscribe({
-      next: response => {
-        const playlists = [...(response.data || [])].sort((a, b) =>
+  ngOnInit(): void {
+    forkJoin({
+      all: this.playlistsApi.listAll(),
+      assigned: this.playlistsApi.getSongPlaylists(this.song().id)
+    }).pipe(finalize(() => this.loading.set(false))).subscribe({
+      next: ({ all, assigned }) => {
+        const playlists = [...(all.data || [])].sort((a, b) =>
           a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
         );
         this.playlists.set(playlists);
+        this.selected.set(new Set((assigned.data || []).map(playlist => playlist.id)));
       },
       error: error => this.error.set(error.message || 'No se pudieron cargar las playlists.')
     });

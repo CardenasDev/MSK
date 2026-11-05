@@ -17,6 +17,7 @@ export class PlaylistApiService {
   addSongToPlaylists(songId: number, playlistIds: number[]) {
     return this.http.post<ApiResponse<unknown>>(`/api/songs/${songId}/playlists`, { playlist_ids: playlistIds });
   }
+  getSongPlaylists(songId: number) { return this.http.get<ApiResponse<Playlist[]>>(`/api/songs/${songId}/playlists`); }
   removeSong(id: number, songId: number) { return this.http.delete<ApiResponse<unknown>>(`/api/playlists/${id}/songs/${songId}`); }
   reorderSong(id: number, songId: number, position: number) { return this.http.put<ApiResponse<unknown>>(`/api/playlists/${id}/songs/${songId}/reorder`, { position }); }
 }

@@ -110,6 +110,27 @@ class SongController
             $songs = $stmt->fetchAll();
             $stmt->closeCursor();
 
+            if ($songs !== []) {
+                $songIds = array_map(static fn (array $song): int => (int)$song['id'], $songs);
+                $placeholders = implode(',', array_fill(0, count($songIds), '?'));
+                $countStmt = $this->db->prepare(
+                    "SELECT ps.song_id, COUNT(*) AS playlists_count
+                     FROM playlist_songs ps
+                     INNER JOIN playlists p ON p.id = ps.playlist_id AND p.is_active = 1
+                     WHERE ps.song_id IN ({$placeholders}) AND ps.is_active = 1
+                     GROUP BY ps.song_id"
+                );
+                $countStmt->execute($songIds);
+                $playlistCounts = [];
+                foreach ($countStmt->fetchAll() as $row) {
+                    $playlistCounts[(int)$row['song_id']] = (int)$row['playlists_count'];
+                }
+                foreach ($songs as &$song) {
+                    $song['playlists_count'] = $playlistCounts[(int)$song['id']] ?? 0;
+                }
+                unset($song);
+            }
+
             $totalPages = $limit > 0 ? (int)ceil($totalRecords / $limit) : 1;
 
             $meta = [
@@ -248,6 +269,33 @@ class SongController
     }
 
     /**
+     * GET /api/songs/{id}/playlists -> Lista las playlists activas de una canción.
+     */
+    public function listPlaylists(int $songId): void
+    {
+        if ($songId <= 0) {
+            Response::error('ID de canción inválido.', 400);
+        }
+
+        try {
+            $stmt = $this->db->prepare(
+                'SELECT p.id, p.name, p.description, p.created_at, p.updated_at
+                 FROM playlist_songs ps
+                 INNER JOIN playlists p ON p.id = ps.playlist_id AND p.is_active = 1
+                 WHERE ps.song_id = :song_id AND ps.is_active = 1
+                 ORDER BY p.name ASC'
+            );
+            $stmt->execute([':song_id' => $songId]);
+            $playlists = $stmt->fetchAll();
+            $stmt->closeCursor();
+
+            Response::json($playlists);
+        } catch (PDOException $e) {
+            Response::error('Error al listar playlists de la canción: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
      * PUT /api/songs/{id} -> CALL sp_song_update
      */
     public function update(int $id): void
@@ -309,7 +357,13 @@ class SongController
 
             $affected = (int)($row['affected_rows'] ?? 0);
             if ($affected === 0) {
-                Response::error('Canción no encontrada o ya inactiva.', 404);
+                $verifyStmt = $this->db->prepare(
+                    'SELECT id FROM songs WHERE id = :id AND is_active = 0'
+                );
+                $verifyStmt->execute([':id' => $id]);
+                if (!$verifyStmt->fetch()) {
+                    Response::error('Canción no encontrada o ya inactiva.', 404);
+                }
             }
 
             Response::json(['id' => $id, 'deleted' => true], 200, null, 'Canción desactivada lógicamente.');

@@ -17,7 +17,7 @@ import { AddToPlaylistModalComponent } from '../components/add-to-playlist-modal
       @if (errors.message()) { <div class="alert error">{{ errors.message() }}</div> }
       @if (loading()) { <p class="state">Cargando catálogo…</p> } @else if (!songs().length) { <p class="state">No hay canciones para mostrar.</p> } @else {
         <div class="table-responsive"><table class="table"><thead><tr><th>Título</th><th>Artista</th><th>Álbum</th><th>Acciones</th></tr></thead><tbody>
-          @for (song of songs(); track song.id) { <tr><td>{{ song.title }}</td><td>{{ song.artist }}</td><td>{{ song.album || '—' }}</td><td class="table-actions"><button class="btn btn-secondary" (click)="openAddToPlaylist(song)">Añadir a lista</button><button class="btn btn-icon btn-secondary" (click)="edit(song)">Editar</button></td></tr> }
+          @for (song of songs(); track song.id) { <tr><td>{{ song.title }}</td><td>{{ song.artist }}</td><td>{{ song.album || '—' }}</td><td class="table-actions"><button class="btn btn-secondary" [class.btn-added]="song.playlists_count" (click)="openAddToPlaylist(song)">{{ song.playlists_count ? 'Añadida' : 'Añadir a lista' }}</button><button class="btn btn-icon btn-secondary" (click)="edit(song)">Editar</button><button class="btn btn-danger btn-icon" (click)="remove(song)">Eliminar</button></td></tr> }
         </tbody></table></div>
         <div class="pagination"><button class="btn btn-secondary" [disabled]="page() <= 1" (click)="load(page()-1)">Anterior</button><span>Página {{ page() }} de {{ totalPages() || 1 }}</span><button class="btn btn-secondary" [disabled]="page() >= totalPages()" (click)="load(page()+1)">Siguiente</button></div>
       }
@@ -38,5 +38,12 @@ export class SongCatalogComponent {
   edit(song: Song): void { this.editing.set({ ...song }); }
   openAddToPlaylist(song: Song): void { this.songToAdd.set(song); }
   handlePlaylistSaved(): void { this.songToAdd.set(null); }
+  remove(song: Song): void {
+    if (!confirm(`¿Eliminar "${song.title}"?`)) return;
+    this.api.remove(song.id).subscribe({
+      next: () => this.load(this.page()),
+      error: error => this.errors.show(error.message || 'No se pudo eliminar la canción.')
+    });
+  }
   save(): void { const value = this.editing(); if (!value?.title?.trim() || !value.artist?.trim()) return; const dto = { title: value.title.trim(), artist: value.artist.trim(), album: value.album || undefined }; const request = value.id ? this.api.update(value.id, dto) : this.api.create(dto); request.subscribe(() => { this.editing.set(null); this.load(this.page()); }); }
 }

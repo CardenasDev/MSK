@@ -78,6 +78,11 @@ if ($method === 'POST' && preg_match('#^/api/songs/(\d+)/playlists$#', $path, $m
     $songCtrl->addToPlaylists((int)$matches[1]);
 }
 
+// GET /api/songs/{id}/playlists -> Listar playlists de una canción
+if ($method === 'GET' && preg_match('#^/api/songs/(\d+)/playlists$#', $path, $matches)) {
+    $songCtrl->listPlaylists((int)$matches[1]);
+}
+
 // POST /api/songs/{id}/restore -> Restaurar borrado lógico
 if ($method === 'POST' && preg_match('#^/api/songs/(\d+)/restore$#', $path, $matches)) {
     $songCtrl->restore((int)$matches[1]);
@@ -144,6 +149,11 @@ if ($method === 'POST' && preg_match('#^/api/playlists/(\d+)/restore$#', $path, 
 // GET /api/playlists/{id} -> Detalle
 if ($method === 'GET' && preg_match('#^/api/playlists/(\d+)$#', $path, $matches)) {
     $playlistCtrl->getById((int)$matches[1]);
+}
+
+// POST /api/playlists/{id}/groups -> Añadir playlist a varios grupos
+if ($method === 'POST' && preg_match('#^/api/playlists/(\d+)/groups$#', $path, $matches)) {
+    $groupPlaylistCtrl->addToGroups((int)$matches[1]);
 }
 
 // PUT /api/playlists/{id} -> Actualizar

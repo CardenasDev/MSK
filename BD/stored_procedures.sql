@@ -84,6 +84,8 @@ CREATE PROCEDURE `sp_song_update`(
     IN p_duration_seconds INT UNSIGNED
 )
 BEGIN
+    DECLARE v_song_affected INT DEFAULT 0;
+
     UPDATE `songs`
     SET `title` = TRIM(p_title),
         `artist` = TRIM(p_artist),
@@ -104,13 +106,14 @@ BEGIN
     SET `is_active` = 0,
         `deleted_at` = NOW()
     WHERE `id` = p_id;
+    SET v_song_affected = ROW_COUNT();
 
     UPDATE `playlist_songs`
     SET `is_active` = 0,
         `deleted_at` = NOW()
     WHERE `song_id` = p_id AND `is_active` = 1;
 
-    SELECT ROW_COUNT() AS `affected_rows`;
+    SELECT v_song_affected AS `affected_rows`;
 END$$
 
 DROP PROCEDURE IF EXISTS `sp_song_restore`$$
