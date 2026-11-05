@@ -22,7 +22,19 @@ import * as XLSX from 'xlsx';
         @if (importRows().length && !importErrors().length) { <div class="alert success">Se validaron {{ importRows().length }} filas. Revisa la previsualización y confirma para enviarlas al servidor.</div><div class="table-responsive import-preview"><table class="table"><thead><tr><th>Fila</th><th>Título</th><th>Artista</th><th>Álbum</th><th>Género</th><th>Duración</th></tr></thead><tbody>@for (row of importRows().slice(0, 10); track $index) { <tr><td>{{ $index + 2 }}</td><td>{{ row.title }}</td><td>{{ row.artist }}</td><td>{{ row.album || '—' }}</td><td>{{ row.genre || '—' }}</td><td>{{ row.duration_seconds ?? 0 }}</td></tr> }</tbody></table></div> }
         @if (importResult(); as result) { <div class="alert success">Importación completada: {{ result }} canciones insertadas.</div> }
       </div><div class="modal-footer"><button type="button" class="btn btn-secondary" (click)="closeImport()">Cancelar</button><button type="button" class="btn btn-primary" [disabled]="!importRows().length || importErrors().length > 0 || importLoading()" (click)="confirmImport()">Confirmar importación</button></div></section></div> }
-      <div class="toolbar"><input aria-label="Buscar canciones" [ngModel]="query()" (ngModelChange)="search$.next($event)" placeholder="Buscar por título, artista o álbum..." /><select aria-label="Canciones por página" [ngModel]="limit()" (ngModelChange)="setLimit($event)"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="15">15</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select></div>
+      <div class="catalog-toolbar">
+        <label class="catalog-search">
+          <span class="search-icon" aria-hidden="true">⌕</span>
+          <span class="sr-only">Buscar canciones</span>
+          <input aria-label="Buscar canciones" [ngModel]="query()" (ngModelChange)="search$.next($event)" placeholder="Buscar por título, artista o álbum..." />
+          @if (query()) { <button type="button" class="search-clear" aria-label="Limpiar búsqueda" (click)="search$.next('')">×</button> }
+        </label>
+        <label class="page-size">
+          <span>Mostrar</span>
+          <select aria-label="Canciones por página" [ngModel]="limit()" (ngModelChange)="setLimit($event)"><option [ngValue]="5">5</option><option [ngValue]="10">10</option><option [ngValue]="15">15</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select>
+          <span>canciones</span>
+        </label>
+      </div>
       @if (errors.message()) { <div class="alert error">{{ errors.message() }}</div> }
       @if (loading()) { <p class="state">Cargando catálogo…</p> } @else if (!songs().length) { <p class="state">No hay canciones para mostrar.</p> } @else {
         <div class="table-responsive"><table class="table"><thead><tr><th>Título</th><th>Artista</th><th>Álbum</th><th>Acciones</th></tr></thead><tbody>
