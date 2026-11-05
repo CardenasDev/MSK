@@ -49,7 +49,7 @@ CREATE PROCEDURE `sp_song_list`(
     IN p_offset INT UNSIGNED
 )
 BEGIN
-    DECLARE v_search VARCHAR(255);
+    DECLARE v_search VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     DECLARE v_limit INT UNSIGNED;
     DECLARE v_offset INT UNSIGNED;
 
@@ -76,7 +76,9 @@ BEGIN
     WHERE s.`is_active` = 1
       AND (v_search IS NULL OR MATCH(s.`title`, s.`artist`, s.`album`) AGAINST(v_search IN NATURAL LANGUAGE MODE) OR s.`title` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci)
       AND (p_genre IS NULL OR CONVERT(p_genre USING utf8mb4) = _utf8mb4'' OR s.`genre` = CONVERT(p_genre USING utf8mb4) COLLATE utf8mb4_unicode_ci)
-    ORDER BY s.`id` DESC
+    ORDER BY s.`title` COLLATE utf8mb4_unicode_ci ASC,
+             s.`artist` COLLATE utf8mb4_unicode_ci ASC,
+             s.`id` ASC
     LIMIT v_limit OFFSET v_offset;
 END$$
 

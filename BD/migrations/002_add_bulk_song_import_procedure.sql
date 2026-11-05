@@ -10,7 +10,6 @@ SQL SECURITY INVOKER
 BEGIN
     DECLARE v_row_count INT DEFAULT 0;
     DECLARE v_invalid_row INT DEFAULT NULL;
-    DECLARE v_duplicate_count INT DEFAULT 0;
     DECLARE v_inserted_count INT DEFAULT 0;
     DECLARE v_index INT DEFAULT 0;
     DECLARE v_title VARCHAR(255);
@@ -104,31 +103,6 @@ BEGIN
     IF v_invalid_row IS NOT NULL THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'El lote contiene una fila con datos inválidos.';
-    END IF;
-
-    SELECT COALESCE(SUM(`duplicate_count`), 0)
-    INTO v_duplicate_count
-    FROM (
-        SELECT COUNT(*) AS `duplicate_count`
-        FROM `tmp_song_bulk_import`
-        GROUP BY `dedupe_key`
-        HAVING COUNT(*) > 1
-    ) AS duplicates_in_batch;
-
-    SELECT v_duplicate_count + COUNT(*)
-    INTO v_duplicate_count
-    FROM `tmp_song_bulk_import` AS batch
-    INNER JOIN `songs` AS existing
-        ON CONVERT(SHA2(CONCAT(
-            LOWER(TRIM(existing.`title`)), CHAR(31),
-            LOWER(TRIM(existing.`artist`)), CHAR(31),
-            LOWER(TRIM(COALESCE(existing.`album`, '')))
-        ), 256) USING ascii) COLLATE ascii_bin = batch.`dedupe_key`
-       AND existing.`is_active` = 1;
-
-    IF v_duplicate_count > 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'El lote contiene canciones duplicadas.';
     END IF;
 
     START TRANSACTION;

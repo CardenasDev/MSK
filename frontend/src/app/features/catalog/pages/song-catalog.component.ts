@@ -93,7 +93,7 @@ export class SongCatalogComponent {
           errors.push({ row: 1, field: 'encabezados', message: `Deben ser exactamente: ${expected.join(', ')}.` });
         }
         const rows = matrix.slice(1); if (rows.length > 2500) errors.push({ row: 0, field: 'filas', message: 'El máximo permitido es 2.500 registros.' });
-        const parsed: BulkSongImportRow[] = []; const seen = new Set<string>();
+        const parsed: BulkSongImportRow[] = [];
         rows.forEach((values, index) => {
           const rowNumber = index + 2; const cells = values as unknown[]; const title = String(cells[0] ?? '').trim(); const artist = String(cells[1] ?? '').trim(); const album = String(cells[2] ?? '').trim(); const genre = String(cells[3] ?? '').trim(); const rawDuration = cells[4];
           if (cells.every(value => value === null || String(value).trim() === '')) { errors.push({ row: rowNumber, field: 'fila', message: 'La fila no puede estar vacía.' }); return; }
@@ -101,8 +101,6 @@ export class SongCatalogComponent {
           if (!artist) errors.push({ row: rowNumber, field: 'artist', message: 'El artista es obligatorio.' });
           const duration = rawDuration === null || rawDuration === '' ? 0 : Number(rawDuration);
           if (!Number.isInteger(duration) || duration < 0 || duration > 86399) errors.push({ row: rowNumber, field: 'duration_seconds', message: 'Debe ser un entero entre 0 y 86.399.' });
-          const key = [title, artist, album].map(value => value.toLocaleLowerCase().replace(/\s+/g, ' ')).join('\u0000');
-          if (seen.has(key)) errors.push({ row: rowNumber, field: 'title, artist, album', message: 'Duplicidad dentro del archivo.' }); else seen.add(key);
           parsed.push({ title, artist, album: album || undefined, genre: genre || undefined, duration_seconds: duration });
         });
         this.importRows.set(parsed); this.importErrors.set(errors);
