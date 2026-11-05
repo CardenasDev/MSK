@@ -275,6 +275,7 @@ body {
         flex: 1;
         color: var(--text-muted);
       }
+
     }
 
     .close-btn {
@@ -285,6 +286,7 @@ body {
       cursor: pointer;
       &:hover { color: var(--text-main); }
     }
+
   }
 
   .modal-body {
@@ -298,6 +300,58 @@ body {
     justify-content: flex-end;
     gap: 0.75rem;
     background-color: rgba(15, 23, 42, 0.4);
+  }
+}
+
+.table-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.modal-description {
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+}
+
+.playlist-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: min(45vh, 320px);
+  overflow-y: auto;
+  padding-right: 0.35rem;
+}
+
+.playlist-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 0 0 auto;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-input);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+  }
+
+  input {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary);
+  }
+
+  span {
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  small {
+    color: var(--text-muted);
   }
 }
 

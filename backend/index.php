@@ -73,6 +73,11 @@ if ($method === 'GET' && $path === '/api/songs') {
     $songCtrl->list();
 }
 
+// POST /api/songs/{id}/playlists -> Añadir canción a varias playlists
+if ($method === 'POST' && preg_match('#^/api/songs/(\d+)/playlists$#', $path, $matches)) {
+    $songCtrl->addToPlaylists((int)$matches[1]);
+}
+
 // POST /api/songs/{id}/restore -> Restaurar borrado lógico
 if ($method === 'POST' && preg_match('#^/api/songs/(\d+)/restore$#', $path, $matches)) {
     $songCtrl->restore((int)$matches[1]);

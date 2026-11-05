@@ -127,6 +127,127 @@ class SongController
     }
 
     /**
+     * POST /api/songs/{id}/playlists -> Añade/reactiva una canción en varias playlists.
+     */
+    public function addToPlaylists(int $songId): void
+    {
+            if ($songId <= 0) {
+                Response::error('ID de canción inválido.', 400);
+            }
+
+            $body = Response::getJsonBody();
+            $playlistIds = $body['playlist_ids'] ?? null;
+
+            if (!is_array($playlistIds) || $playlistIds === []) {
+                Response::error('playlist_ids debe ser un arreglo no vacío.', 422);
+            }
+
+            $playlistIds = array_values(array_unique(array_filter(
+                array_map(static fn (mixed $id): int => (int)$id, $playlistIds),
+                static fn (int $id): bool => $id > 0
+            )));
+
+            if ($playlistIds === []) {
+                Response::error('playlist_ids debe contener IDs válidos.', 422);
+            }
+
+            try {
+                $this->db->beginTransaction();
+
+                $songStmt = $this->db->prepare(
+                    'SELECT id FROM songs WHERE id = :song_id AND is_active = 1 FOR UPDATE'
+                );
+                $songStmt->execute([':song_id' => $songId]);
+                if (!$songStmt->fetch()) {
+                    $this->db->rollBack();
+                    Response::error('Canción no encontrada o inactiva.', 404);
+                }
+
+                $placeholders = implode(',', array_fill(0, count($playlistIds), '?'));
+                $playlistStmt = $this->db->prepare(
+                    "SELECT id FROM playlists WHERE id IN ({$placeholders}) AND is_active = 1 FOR UPDATE"
+                );
+                $playlistStmt->execute($playlistIds);
+                $availableIds = array_map('intval', $playlistStmt->fetchAll(PDO::FETCH_COLUMN));
+                $missingIds = array_values(array_diff($playlistIds, $availableIds));
+
+                if ($missingIds !== []) {
+                    $this->db->rollBack();
+                    Response::error('Una o más playlists no existen o están inactivas.', 404, [
+                        ['field' => 'playlist_ids', 'invalid_ids' => $missingIds]
+                    ]);
+                }
+
+                $relationStmt = $this->db->prepare(
+                    'SELECT id, is_active FROM playlist_songs
+                     WHERE playlist_id = :playlist_id AND song_id = :song_id
+                     FOR UPDATE'
+                );
+                $positionStmt = $this->db->prepare(
+                    'SELECT COALESCE(MAX(position), 0) + 1
+                     FROM playlist_songs
+                     WHERE playlist_id = :playlist_id AND is_active = 1'
+                );
+                $insertStmt = $this->db->prepare(
+                    'INSERT INTO playlist_songs
+                        (playlist_id, song_id, position, is_active, added_at, deleted_at)
+                     VALUES (:playlist_id, :song_id, :position, 1, NOW(), NULL)'
+                );
+                $reactivateStmt = $this->db->prepare(
+                    'UPDATE playlist_songs
+                     SET is_active = 1, deleted_at = NULL, added_at = NOW(), position = :position
+                     WHERE id = :id'
+                );
+
+                $added = 0;
+                $reactivated = 0;
+                foreach ($availableIds as $playlistId) {
+                    $relationStmt->execute([
+                        ':playlist_id' => $playlistId,
+                        ':song_id' => $songId
+                    ]);
+                    $relation = $relationStmt->fetch();
+
+                    if ($relation && (int)$relation['is_active'] === 1) {
+                        continue;
+                    }
+
+                    $positionStmt->execute([':playlist_id' => $playlistId]);
+                    $position = (int)$positionStmt->fetchColumn();
+
+                    if ($relation) {
+                        $reactivateStmt->execute([
+                            ':id' => (int)$relation['id'],
+                            ':position' => $position
+                        ]);
+                        $reactivated++;
+                    } else {
+                        $insertStmt->execute([
+                            ':playlist_id' => $playlistId,
+                            ':song_id' => $songId,
+                            ':position' => $position
+                        ]);
+                        $added++;
+                    }
+                }
+
+                $this->db->commit();
+                Response::json([
+                    'song_id' => $songId,
+                    'playlist_ids' => $availableIds,
+                    'added' => $added,
+                    'reactivated' => $reactivated,
+                    'skipped' => count($availableIds) - $added - $reactivated
+                ], 201, null, 'Canción añadida a las playlists seleccionadas.');
+            } catch (PDOException $e) {
+                if ($this->db->inTransaction()) {
+                    $this->db->rollBack();
+                }
+                Response::error('Error al añadir canción a las playlists: ' . $e->getMessage(), 500);
+            }
+    }
+
+    /**
      * PUT /api/songs/{id} -> CALL sp_song_update
      */
     public function update(int $id): void
