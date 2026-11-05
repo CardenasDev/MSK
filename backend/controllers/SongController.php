@@ -82,15 +82,37 @@ class SongController
 
     /**
      * GET /api/songs -> CALL sp_song_list
-     * Query params: search, genre, limit (default 25), offset (default 0)
+     * Query params: search, genre, page (default 1), limit (default 25), offset (default derived)
      */
     public function list(): void
     {
-        $search = isset($_GET['search']) ? trim((string)$_GET['search']) : null;
-        $genre = isset($_GET['genre']) ? trim((string)$_GET['genre']) : null;
-        $limit = isset($_GET['limit']) ? max(1, (int)$_GET['limit']) : 25;
-        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-        $offset = isset($_GET['offset']) ? (int)$_GET['offset'] : (($page - 1) * $limit);
+        $defaultLimit = 25;
+        $maxLimit = 100;
+        $maxPage = 100000;
+        $maxOffset = 10000000;
+        $search = isset($_GET['search']) && is_string($_GET['search']) ? trim($_GET['search']) : null;
+        $genre = isset($_GET['genre']) && is_string($_GET['genre']) ? trim($_GET['genre']) : null;
+        $requestedLimit = isset($_GET['limit']) && is_string($_GET['limit'])
+            ? filter_var($_GET['limit'], FILTER_VALIDATE_INT)
+            : null;
+        $limit = $requestedLimit === false || $requestedLimit === null || $requestedLimit < 1
+            ? $defaultLimit
+            : min($requestedLimit, $maxLimit);
+        $hasPage = isset($_GET['page']) && is_string($_GET['page']);
+        $requestedPage = $hasPage ? filter_var($_GET['page'], FILTER_VALIDATE_INT) : null;
+        $page = $requestedPage === false || $requestedPage === null || $requestedPage < 1
+            ? 1
+            : min($requestedPage, $maxPage);
+        $derivedOffset = ($page - 1) * $limit;
+        $requestedOffset = !$hasPage && isset($_GET['offset']) && is_string($_GET['offset'])
+            ? filter_var($_GET['offset'], FILTER_VALIDATE_INT)
+            : null;
+        $offset = $requestedOffset === false || $requestedOffset === null || $requestedOffset < 0
+            ? $derivedOffset
+            : min($requestedOffset, $maxOffset);
+        if (!$hasPage && $requestedOffset !== false && $requestedOffset !== null && $requestedOffset >= 0) {
+            $page = (int)floor($offset / $limit) + 1;
+        }
 
         try {
             $stmt = $this->db->prepare('CALL sp_song_list(:search, :genre, :limit, :offset)');

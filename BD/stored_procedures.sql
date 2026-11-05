@@ -49,13 +49,19 @@ CREATE PROCEDURE `sp_song_list`(
     IN p_offset INT UNSIGNED
 )
 BEGIN
-    SET p_limit = COALESCE(p_limit, 25);
-    SET p_offset = COALESCE(p_offset, 0);
+    DECLARE v_search VARCHAR(255);
+    DECLARE v_limit INT UNSIGNED;
+    DECLARE v_offset INT UNSIGNED;
+
+    SET v_search = NULLIF(TRIM(p_search), '');
+    SET v_limit = COALESCE(NULLIF(p_limit, 0), 25);
+    SET v_limit = LEAST(v_limit, 100);
+    SET v_offset = LEAST(COALESCE(p_offset, 0), 10000000);
 
     SELECT COUNT(*) AS `total_records`
     FROM `songs` s
     WHERE s.`is_active` = 1
-      AND (p_search IS NULL OR CONVERT(p_search USING utf8mb4) = _utf8mb4'' OR s.`title` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
+      AND (v_search IS NULL OR MATCH(s.`title`, s.`artist`, s.`album`) AGAINST(v_search IN NATURAL LANGUAGE MODE) OR s.`title` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci)
       AND (p_genre IS NULL OR CONVERT(p_genre USING utf8mb4) = _utf8mb4'' OR s.`genre` = CONVERT(p_genre USING utf8mb4) COLLATE utf8mb4_unicode_ci);
 
     SELECT 
@@ -68,10 +74,10 @@ BEGIN
         s.`created_at`
     FROM `songs` s
     WHERE s.`is_active` = 1
-      AND (p_search IS NULL OR CONVERT(p_search USING utf8mb4) = _utf8mb4'' OR s.`title` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', CONVERT(p_search USING utf8mb4), '%') COLLATE utf8mb4_unicode_ci)
+      AND (v_search IS NULL OR MATCH(s.`title`, s.`artist`, s.`album`) AGAINST(v_search IN NATURAL LANGUAGE MODE) OR s.`title` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci OR s.`artist` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci OR s.`album` LIKE CONCAT('%', v_search, '%') COLLATE utf8mb4_unicode_ci)
       AND (p_genre IS NULL OR CONVERT(p_genre USING utf8mb4) = _utf8mb4'' OR s.`genre` = CONVERT(p_genre USING utf8mb4) COLLATE utf8mb4_unicode_ci)
     ORDER BY s.`id` DESC
-    LIMIT p_limit OFFSET p_offset;
+    LIMIT v_limit OFFSET v_offset;
 END$$
 
 DROP PROCEDURE IF EXISTS `sp_song_update`$$
