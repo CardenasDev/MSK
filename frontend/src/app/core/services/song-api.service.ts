@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiResponse } from '../models/api-response.model';
-import { CreateSongDto, Song, SongFilterParams } from '../models/song.model';
+import { BulkSongImportResult, BulkSongImportRow, CreateSongDto, Song, SongFilterParams } from '../models/song.model';
 
 @Injectable({ providedIn: 'root' })
 export class SongApiService {
@@ -17,4 +17,7 @@ export class SongApiService {
   create(dto: CreateSongDto) { return this.http.post<ApiResponse<Song>>('/api/songs', dto); }
   update(id: number, dto: Partial<CreateSongDto>) { return this.http.put<ApiResponse<Song>>(`/api/songs/${id}`, dto); }
   remove(id: number) { return this.http.delete<ApiResponse<unknown>>(`/api/songs/${id}`); }
+  bulkImport(rows: BulkSongImportRow[]) {
+    return this.http.post<ApiResponse<BulkSongImportResult>>('/api/songs/bulk-import', { rows });
+  }
 }

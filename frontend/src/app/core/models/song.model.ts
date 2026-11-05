@@ -2,3 +2,6 @@ export interface Song { id: number; title: string; artist: string; album: string
 export interface SongInPlaylist extends Song { position: number; added_at: string; }
 export interface SongFilterParams { search?: string; artist?: string; page: number; limit: number; }
 export interface CreateSongDto { title: string; artist: string; album?: string; discovery_date?: string; notes?: string; }
+export interface BulkSongImportRow { title: string; artist: string; album?: string; genre?: string; duration_seconds?: number; }
+export interface BulkSongImportError { row: number; field: string; message: string; }
+export interface BulkSongImportResult { inserted_count?: number; status?: string; }
